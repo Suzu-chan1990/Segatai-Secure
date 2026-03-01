@@ -7,10 +7,10 @@ add_action('plugins_loaded', function () {
 });
 /*
 Plugin Name: Tegatai Security
-Plugin URI: https://vtubes.tokyo
+Plugin URI: https://example.com/tegatai
 Description: Tegatai Security Suite - Custom Edition. Update: Traffic Inspector & Database Logging.
 Version: 1.0.0 (Gold Master)
-Author: すずちゃん
+Author: ã™ãšã¡ã‚ƒã‚“
 License: GPL2
 */
 
@@ -170,3 +170,34 @@ add_action('plugins_loaded', ['Tegatai_Timeline', 'init']);
 add_action('plugins_loaded', ['Tegatai_Honeypot', 'init']);
 add_action('plugins_loaded', ['Tegatai_Cron_Monitor', 'init']);
 add_action('plugins_loaded', ['Tegatai_Uploads_Monitor', 'init']);
+
+// --- GitHub Updater (Plugin Update Checker) ---
+add_action('init', function () {
+    // Nur im Admin wirklich nötig, aber init ist ok
+    if ( ! is_admin() ) {
+        return;
+    }
+
+    $puc_path = TEGATAI_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
+    if ( ! file_exists($puc_path) ) {
+        return; // Library fehlt
+    }
+
+    require_once $puc_path;
+
+    // Build checker
+    $updateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        'https://github.com/Suzu-chan1990/Segatai-Secure/',
+        __FILE__,
+        'tegatai-secure' // Plugin-Slug (sollte stabil sein)
+    );
+
+    // Wenn du Releases/Tags nutzt:
+    $updateChecker->getVcsApi()->enableReleaseAssets();
+
+    // Falls du (statt Releases) direkt den main-Branch “auslieferst”:
+    // $updateChecker->setBranch('main');
+
+    // Optional: falls dein Hauptplugin nicht im Repo-Root läge (bei dir liegt es im Root -> passt)
+    // $updateChecker->setPluginFileName('tegatai-secure.php');
+});
