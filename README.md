@@ -1,3 +1,9 @@
+![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-blue)
+![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple)
+![License](https://img.shields.io/badge/license-GPLv2%2B-green)
+![Security](https://img.shields.io/badge/security-active-red)
+![Status](https://img.shields.io/badge/status-stable-brightgreen)
+
 # 🛡️ Tegatai Secure (Enterprise WordPress Security)
 
 **Tegatai Secure** is a high-performance, enterprise-grade security suite for WordPress. Unlike traditional security plugins that process everything at the PHP level, Tegatai integrates directly with your server (**Nginx, Apache, or LiteSpeed**) to block malicious traffic, bots, and brute-force attacks *before* WordPress is even loaded.
@@ -99,3 +105,38 @@ server {
     # Include Tegatai Security Rules
     include /path/to/your/wordpress/tegatai-nginx.conf;
 }
+
+---
+
+## Installation
+
+1. Upload the plugin folder to:
+
+```
+/wp-content/plugins/tegatai-secure
+```
+
+2. Activate the plugin in the WordPress admin panel.
+3. Open **Tegatai Secure** and configure your protection modules.
+
+## Requirements
+
+- WordPress 6.0+
+- PHP 7.4+
+
+## Contributing
+
+See `CONTRIBUTING.md`.
+
+## Security
+
+If you discover a vulnerability, please report it privately.
+- Contact: `security@your-domain.example`
+
+## License
+
+GPL v2 or later. See `LICENSE`.
+
+## Changelog
+
+See `CHANGELOG.md` (current: 1.0.0).
