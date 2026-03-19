@@ -1,6 +1,17 @@
 <?php
 if (!defined('ABSPATH')) { exit; }
 
+
+add_action('wp_ajax_tegatai_quarantine_restore', function() {
+    if (!current_user_can('manage_options')) wp_die('Access denied');
+    $id = sanitize_text_field($_POST['id'] ?? '');
+    if (class_exists('Tegatai_Quarantine')) {
+        $res = Tegatai_Quarantine::restore_file($id);
+        if ($res['ok']) wp_send_json_success(['msg' => 'Datei erfolgreich wiederhergestellt: ' . $res['file']]);
+        wp_send_json_error(['msg' => 'Fehler: ' . $res['error']]);
+    }
+});
+
 class Tegatai_Quarantine {
 
     const OPT_DIR = 'teg_quarantine_dir_v1';
@@ -69,4 +80,34 @@ class Tegatai_Quarantine {
             'renamed' => $renamed ? $new_name : '',
         ];
     }
+
+    public static function restore_file(string $id): array {
+        $id = preg_replace('/[^a-f0-9]/', '', $id);
+        if (empty($id)) return ['ok'=>false, 'error'=>'invalid_id'];
+        
+        $dir = self::dir();
+        $meta = $dir . '/' . $id . '.json';
+        $blob = $dir . '/' . $id . '.bin';
+        
+        if (!file_exists($meta) || !file_exists($blob)) return ['ok'=>false, 'error'=>'not_found'];
+        
+        $data = json_decode(file_get_contents($meta), true);
+        if (empty($data['original'])) return ['ok'=>false, 'error'=>'meta_invalid'];
+        
+        $orig = $data['original'];
+        $content = base64_decode(file_get_contents($blob));
+        
+        // Versuche, das Originalverzeichnis wiederherzustellen, falls es gelöscht wurde
+        $orig_dir = dirname($orig);
+        if (!is_dir($orig_dir)) { @wp_mkdir_p($orig_dir); }
+        
+        if (@file_put_contents($orig, $content) !== false) {
+            @unlink($meta);
+            @unlink($blob);
+            if (class_exists('Tegatai_Logger')) Tegatai_Logger::log('QUARANTINE', "Datei wiederhergestellt: " . $orig);
+            return ['ok'=>true, 'file'=>$orig];
+        }
+        return ['ok'=>false, 'error'=>'write_failed'];
+    }
+
 }

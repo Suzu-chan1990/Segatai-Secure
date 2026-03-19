@@ -8,7 +8,7 @@ class Tegatai_UserHistory {
     }
     public function log_login($user_login, $user) {
         $history = get_option('tegatai_login_history', []);
-        $entry = ['time' => current_time('mysql'), 'user' => $user_login, 'role' => reset($user->roles), 'ip' => $_SERVER['REMOTE_ADDR'], 'ua' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'];
+        $entry = ['time' => current_time('mysql'), 'user' => $user_login, 'role' => reset($user->roles), 'ip' => (!empty($_SERVER['HTTP_CF_CONNECTING_IP']) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : (!empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]) : $_SERVER['REMOTE_ADDR'])), 'ua' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'];
         array_unshift($history, $entry); if (count($history) > 100) $history = array_slice($history, 0, 100);
         update_option('tegatai_login_history', $history, false);
     }

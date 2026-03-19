@@ -277,6 +277,9 @@ class Tegatai_Server {
         }
 
         $lines[] = "";
+        $up_url = wp_parse_url(wp_upload_dir()['baseurl'], PHP_URL_PATH);
+        $lines[] = "location ^~ " . rtrim($up_url, '/') . "/tegatai-backups/ { deny all; return 403; }";
+        $lines[] = "";
         $lines[] = "# --- END TEGATAI RULES ---";
             // Block PHP execution in sensitive content paths (PHP-only, do not break static assets)
             $lines[] = "location ~ ^/appurodo/.*\\.(?:(?:php[1-7]?|pht|phtml?|phps))$ { deny all; }";

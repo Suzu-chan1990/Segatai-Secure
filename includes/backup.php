@@ -7,6 +7,10 @@ class Tegatai_Backup {
     public function __construct() {
         $upload = wp_upload_dir();
         $this->backup_dir = trailingslashit($upload['basedir']) . 'tegatai-backups/';
+        if (!is_dir($this->backup_dir)) { @wp_mkdir_p($this->backup_dir); }
+        if (!file_exists($this->backup_dir . '.htaccess')) { @file_put_contents($this->backup_dir . '.htaccess', "Require all denied\nDeny from all"); }
+        if (!file_exists($this->backup_dir . 'index.php')) { @file_put_contents($this->backup_dir . 'index.php', "<?php\n// Silence is golden."); }
+        if (!file_exists($this->backup_dir . 'web.config')) { @file_put_contents($this->backup_dir . 'web.config', '<?xml version="1.0" encoding="UTF-8"?><configuration><system.webServer><authorization><deny users="*" /></authorization></system.webServer></configuration>'); }
         
         add_action('admin_post_tegatai_create_backup', [$this, 'create_backup_action']);
         add_action('admin_post_tegatai_delete_backup', [$this, 'delete_backup']);

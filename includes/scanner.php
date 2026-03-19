@@ -10,6 +10,10 @@ class Tegatai_Scanner {
         add_action('tegatai_daily_maintenance', [$this, 'auto_night_scan']);
         add_action('tegatai_daily_maintenance', [$this, 'check_cve_vulnerabilities']);
         add_action('admin_post_tegatai_scan_snapshot', [$this, 'create_snapshot']);
+    
+        // Asynchroner Background-Scanner
+        add_action('tegatai_bg_scan_chunk', [$this, 'process_bg_chunk']);
+        add_action('wp_ajax_tegatai_start_bg_scan', [$this, 'start_bg_scan_ajax']);
     }
 
     public function create_snapshot() {
@@ -282,6 +286,45 @@ if (empty($state) || !$state['running']) {
                         break; 
                     }
                 }
+            }
+        }
+    }
+
+
+    /**
+     * Startet den asynchronen Scan via AJAX
+     */
+    public function start_bg_scan_ajax() {
+        if (!current_user_can('manage_options')) wp_die('Access Denied');
+        
+        if (!class_exists('Tegatai_Malware_Scanner')) {
+            wp_send_json_error(['msg' => 'Scanner-Modul fehlt.']);
+        }
+        
+        // Alten Status löschen und neuen Job einplanen
+        Tegatai_Malware_Scanner::reset();
+        wp_schedule_single_event(time(), 'tegatai_bg_scan_chunk');
+        
+        wp_send_json_success(['msg' => 'Background scan started successfully.']);
+    }
+
+    /**
+     * Der unsichtbare Background-Worker (WP-Cron)
+     */
+    public function process_bg_chunk() {
+        if (!class_exists('Tegatai_Malware_Scanner')) return;
+        
+        // Scannt 500 Dateien pro Durchlauf (Timeout-sicher)
+        $result = Tegatai_Malware_Scanner::scan(500);
+        
+        if (empty($result['done'])) {
+            // Wenn noch nicht fertig, nächsten Chunk in 5 Sekunden einplanen
+            wp_schedule_single_event(time() + 5, 'tegatai_bg_scan_chunk');
+        } else {
+            // Scan ist komplett durchgelaufen
+            if (class_exists('Tegatai_Logger')) {
+                $hits = isset($result['hits']) ? count($result['hits']) : 0;
+                Tegatai_Logger::log('SCAN', "Background Scan beendet. Dateien: {$result['checked']}, Treffer: {$hits}");
             }
         }
     }

@@ -14,4 +14,4 @@ Include:
 - Potential impact
 - Proof-of-concept (if available)
 
-Contact: security@your-domain.example
+Contact: security@anime-mitsuketa.tokyo

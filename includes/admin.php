@@ -57,6 +57,9 @@ class Tegatai_Admin {
     ];
 
     public function __construct() {
+        add_action('wp_ajax_teg_restore_quarantine', [$this, 'ajax_restore_quarantine']);
+        add_action('wp_ajax_teg_delete_cron', [$this, 'ajax_delete_cron']);
+
         add_action('admin_menu', [$this, 'add_menu']);
         add_action('wp_dashboard_setup', [$this, 'add_dashboard_widgets']);
         add_action('admin_init', [$this, 'register_settings']);
@@ -362,21 +365,6 @@ class Tegatai_Admin {
     <h3 class="teg-dash-title"><span class="dashicons dashicons-shield-alt"></span><?php echo esc_html__('Attack & block overview', 'tegatai-secure'); ?></h3>
     <p class="teg-dash-sub"><?php echo esc_html__('Quick stats + top IPs (last 24 hours).', 'tegatai-secure'); ?></p>
 
-    <div class="teg-kv" style="margin-bottom:12px;">
-      <div class="k"><?php echo esc_html__('Blocked (total)', 'tegatai-secure'); ?>
-      <div class="k"><?php echo esc_html__('Blocks (24h)', 'tegatai-secure'); ?></div>
-      <div class="v"><code><?php echo esc_html((string)intval($blocks_24h ?? 0)); ?></code></div>
-
-      <div class="k"><?php echo esc_html__('Failed logins (24h)', 'tegatai-secure'); ?></div>
-      <div class="v"><code><?php echo esc_html((string)intval($fails_24h ?? 0)); ?></code></div>
-    
-    </div>
-      <div class="v"><code><?php echo esc_html((string)intval($stats2['blocked'] ?? 0)); ?></code></div>
-
-      <div class="k"><?php echo esc_html__('Traffic (total)', 'tegatai-secure'); ?></div>
-      <div class="v"><code><?php echo esc_html((string)intval($stats2['total'] ?? 0)); ?></code></div>
-    </div>
-
     <?php
       $rows2 = (class_exists('Tegatai_Logger') && method_exists('Tegatai_Logger','get_logs')) ? Tegatai_Logger::get_logs(250) : [];
       
@@ -425,6 +413,22 @@ class Tegatai_Admin {
       arsort($ip_counts);
       $top_ips = array_slice($ip_counts, 0, 6, true);
     ?>
+    <div class="teg-kv" style="margin-bottom:12px;">
+      <div class="k"><?php echo esc_html__('Blocked (total)', 'tegatai-secure'); ?>
+      <div class="k"><?php echo esc_html__('Blocks (24h)', 'tegatai-secure'); ?></div>
+      <div class="v"><code><?php echo esc_html((string)intval($blocks_24h ?? 0)); ?></code></div>
+
+      <div class="k"><?php echo esc_html__('Failed logins (24h)', 'tegatai-secure'); ?></div>
+      <div class="v"><code><?php echo esc_html((string)intval($fails_24h ?? 0)); ?></code></div>
+    
+    </div>
+      <div class="v"><code><?php echo esc_html((string)intval($stats2['blocked'] ?? 0)); ?></code></div>
+
+      <div class="k"><?php echo esc_html__('Traffic (total)', 'tegatai-secure'); ?></div>
+      <div class="v"><code><?php echo esc_html((string)intval($stats2['total'] ?? 0)); ?></code></div>
+    </div>
+
+    <?php /* Metrics calculation moved up */ ?>
 
     <div class="teg-kv" style="grid-template-columns:1fr 80px;">
       <div class="k"><?php echo esc_html__('Top IPs (24h)', 'tegatai-secure'); ?></div><div></div>
@@ -528,7 +532,7 @@ class Tegatai_Admin {
     <h3 class="teg-dash-title"><span class="dashicons dashicons-info"></span><?php echo esc_html__('Server status', 'tegatai-secure'); ?></h3>
     <p class="teg-dash-sub"><?php echo esc_html__('Environment details useful for troubleshooting.', 'tegatai-secure'); ?></p>
     <ul style="list-style:none;padding:0;margin:0;line-height:2;">
-      <li><strong>IP:</strong> <?php echo esc_html($_SERVER['REMOTE_ADDR'] ?? ''); ?></li>
+      <li><strong>IP:</strong> <?php echo esc_html((!empty($_SERVER['HTTP_CF_CONNECTING_IP']) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : (!empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]) : $_SERVER['REMOTE_ADDR'])) ?? ''); ?></li>
       <li><strong>Server:</strong> <?php echo esc_html(class_exists('Tegatai_Server') ? Tegatai_Server::detect_server() : ''); ?></li>
       <li><strong>Server Software:</strong> <?php echo esc_html($_SERVER['SERVER_SOFTWARE'] ?? ''); ?></li>
       <li><strong>Hostname:</strong> <?php echo esc_html(function_exists('gethostname') ? gethostname() : php_uname('n')); ?></li>
@@ -553,7 +557,7 @@ class Tegatai_Admin {
                         
                         <div style="background:#e0f2fe; padding:15px; border-radius:6px; border:1px solid #bae6fd; color:#0369a1; margin-bottom:20px;">
                             <strong><?php echo esc_html__('Your current detection:', 'tegatai-secure'); ?></strong><br>
-                            IP: <code><?php echo $_SERVER['REMOTE_ADDR']; ?></code><br>
+                            IP: <code><?php echo (!empty($_SERVER['HTTP_CF_CONNECTING_IP']) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : (!empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]) : $_SERVER['REMOTE_ADDR'])); ?></code><br>
                             <?php echo esc_html__('If this is not your real IP, check your proxy settings.', 'tegatai-secure'); ?>
                         </div>
 
@@ -831,7 +835,7 @@ class Tegatai_Admin {
         $status = get_option('teg_scan_status'); $is_running = isset($status['running']) && $status['running']; if ($is_running) { echo '<div style="padding:20px; background:#e0f2fe; border:1px solid #bae6fd; color:#0369a1; border-radius:6px; margin-bottom:20px;">' . esc_html__('Scan running...', 'tegatai-secure') . '</div>'; echo '<script>setTimeout(function(){ window.location.href="'.admin_url('admin-post.php?action=tegatai_scan_process').'"; }, 1500);</script>'; } else { echo '<form method="post" action="'.admin_url('admin-post.php').'"><input type="hidden" name="action" value="tegatai_scan_start">'.wp_nonce_field('teg_scan_nonce', '_wpnonce', true, false).'<input type="submit" class="button button-primary" value="' . esc_attr__('Start New Scan', 'tegatai-secure') . '"  style="padding:10px 20px; font-size:16px;"></form>';
         echo '<form method="post" action="'.admin_url('admin-post.php').'" style="display:inline-block; margin-left:10px;"><input type="hidden" name="action" value="tegatai_scan_snapshot">'.wp_nonce_field('teg_scan_nonce', '_wpnonce', true, false).'<input type="submit" class="button button-secondary" value="📸 ' . esc_attr__('Create File Snapshot', 'tegatai-secure') . '"  style="padding:10px 20px; font-size:16px;" onclick="return confirm(\'' . esc_attr__('Save current state as a safe baseline?', 'tegatai-secure') . '\');"></form>';
     } if (isset($status['last_scan'])) { echo '<hr style="margin:20px 0; border:0; border-top:1px solid #eee;">'; echo '<div style="display:flex; justify-content:space-between; margin-bottom:10px;"><strong>' . esc_html__('Last Result:', 'tegatai-secure') . '</strong> <span>' . $status['last_scan'] . '</span></div>'; echo '<div style="display:flex; justify-content:space-between; margin-bottom:20px;"><strong>' . esc_html__('Files Checked:', 'tegatai-secure') . '</strong> <span>' . intval($status['files_checked']) . '</span></div>'; if (!empty($status['bad_files'])) { echo '<table class="teg-table"><thead><tr><th>Datei</th><th>' . esc_html__('Issue', 'tegatai-secure') . '</th></tr></thead><tbody>'; foreach ($status['bad_files'] as $bad) echo '<tr><td style="color:var(--teg-danger);">' . esc_html($bad['file']) . '</td><td>' . esc_html($bad['issue']) . '</td></tr>'; echo '</tbody></table>'; } else { echo '<div style="padding:15px; background:#dcfce7; color:#15803d; border-radius:6px; font-weight:bold; text-align:center;">✅ Sauber.</div>'; } } echo '</div><div class="teg-card"><h3>' . esc_html__('Scanner Configuration', 'tegatai-secure') . '</h3><form onsubmit="tegSaveForm(this, event)"><label class="teg-switch-label">' . esc_html__('Exclude from Scan (Folders)', 'tegatai-secure') . '</label><textarea name="tegatai_options[scanner_exclusions]" class="teg-form-input" placeholder="/pfad/zum/cache/">'.esc_textarea($this->get_opt('scanner_exclusions', '/kontentsu/appurodo/avyspp_cache')).'</textarea><input type="submit" class="button button-primary" value="' . esc_attr__('Save', 'tegatai-secure') . '" ></form></div></div>'; }
-        elseif ($tab == 'sessions') { echo '<div class="teg-grid"><div class="teg-card"><h3>' . esc_html__('Session Security', 'tegatai-secure') . '</h3>'; $this->render_toggle('enable_ip_guard', esc_html__('IP Guard', 'tegatai-secure'), esc_html__('Invalidates the session if the users IP address changes.', 'tegatai-secure')); $this->render_toggle('enable_browser_guard', esc_html__('Browser Guard', 'tegatai-secure'), esc_html__('Invalidates the session if the users browser changes.', 'tegatai-secure')); echo '<form onsubmit="tegSaveForm(this, event)" style="margin-top:20px;"><label class="teg-switch-label">' . esc_html__('Max Session Duration (Min)', 'tegatai-secure') . '</label><input type="number" name="tegatai_options[session_max_lifetime]" value="'.esc_attr($this->get_opt('session_max_lifetime')).'" class="teg-form-input"><input type="submit" class="button button-primary" value="' . esc_attr__('Save', 'tegatai-secure') . '" ></form></div><div class="teg-card" style="grid-column: 1 / -1;"><h3>' . esc_html__('Active Sessions', 'tegatai-secure') . '</h3><table class="teg-table"><thead><tr><th>' . esc_html__('User', 'tegatai-secure') . '</th><th>IP</th><th>' . esc_html__('Browser', 'tegatai-secure') . '</th><th>' . esc_html__('Action', 'tegatai-secure') . '</th></tr></thead><tbody>'; foreach(Tegatai_SessionManager::get_all_sessions() as $s): echo "<tr><td>".esc_html($s['username'])."</td><td><code>".esc_html($s['ip'])."</code></td><td><span style='font-size:11px; color:#666;'>".esc_html(substr($s['ua'],0,40))."...</span></td><td><form method='post' action='".admin_url('admin-post.php')."'><input type='hidden' name='action' value='tegatai_kill_session'><input type='hidden' name='user_id' value='{$s['user_id']}'><input type='hidden' name='verifier' value='".esc_attr($s['verifier'])."'><input type='hidden' name='_wpnonce' value='".wp_create_nonce('teg_session_nonce')."'><input type='submit' class='button button-small' value='" . esc_attr__('Kill', 'tegatai-secure') . "'></form></td></tr>"; endforeach; echo '</tbody></table></div></div>'; }
+        elseif ($tab == 'sessions') { echo '<div class="teg-grid"><div class="teg-card"><h3>' . esc_html__('Session Security', 'tegatai-secure') . '</h3>'; $this->render_toggle('enable_ip_guard', esc_html__('IP Guard', 'tegatai-secure'), esc_html__('Invalidates the session if the users IP address changes. ⚠️ WARNING: Disconnects you when switching to mobile data!', 'tegatai-secure')); $this->render_toggle('enable_browser_guard', esc_html__('Browser Guard', 'tegatai-secure'), esc_html__('Invalidates the session if the users browser changes.', 'tegatai-secure')); echo '<form onsubmit="tegSaveForm(this, event)" style="margin-top:20px;"><label class="teg-switch-label">' . esc_html__('Max Session Duration (Min)', 'tegatai-secure') . '</label><input type="number" name="tegatai_options[session_max_lifetime]" value="'.esc_attr($this->get_opt('session_max_lifetime')).'" class="teg-form-input"><input type="submit" class="button button-primary" value="' . esc_attr__('Save', 'tegatai-secure') . '" ></form></div><div class="teg-card" style="grid-column: 1 / -1;"><h3>' . esc_html__('Active Sessions', 'tegatai-secure') . '</h3><table class="teg-table"><thead><tr><th>' . esc_html__('User', 'tegatai-secure') . '</th><th>IP</th><th>' . esc_html__('Browser', 'tegatai-secure') . '</th><th>' . esc_html__('Action', 'tegatai-secure') . '</th></tr></thead><tbody>'; foreach(Tegatai_SessionManager::get_all_sessions() as $s): echo "<tr><td>".esc_html($s['username'])."</td><td><code>".esc_html($s['ip'])."</code></td><td><span style='font-size:11px; color:#666;'>".esc_html(substr($s['ua'],0,40))."...</span></td><td><form method='post' action='".admin_url('admin-post.php')."'><input type='hidden' name='action' value='tegatai_kill_session'><input type='hidden' name='user_id' value='{$s['user_id']}'><input type='hidden' name='verifier' value='".esc_attr($s['verifier'])."'><input type='hidden' name='_wpnonce' value='".wp_create_nonce('teg_session_nonce')."'><input type='submit' class='button button-small' value='" . esc_attr__('Kill', 'tegatai-secure') . "'></form></td></tr>"; endforeach; echo '</tbody></table></div></div>'; }
         elseif ($tab == 'extras') { 
         echo '<div class="teg-grid">';
         
@@ -1198,7 +1202,9 @@ if (isset($_POST['teg_mw_reset']) && check_admin_referer('teg_mw_reset')) {
             echo '<input type="submit" class="button button-primary" value="Ausnahmen Speichern" style="margin-top:10px;">';
             echo '</form>';
             
-            echo '</div></div>';
+            echo '</div>'; // Ende der ersten Card
+            $this->render_cron_list(); // Hier kommt die Tabelle rein
+            echo '</div>'; // Ende des Grids
         }
         elseif ($tab == 'cron') {
             echo '<div class="teg-grid"><div class="teg-card">';
@@ -1217,7 +1223,9 @@ if (isset($_POST['teg_mw_reset']) && check_admin_referer('teg_mw_reset')) {
             echo '<input type="submit" class="button button-primary" value="Ausnahmen Speichern" style="margin-top:10px;">';
             echo '</form>';
             
-            echo '</div></div>';
+            echo '</div>'; // Ende der ersten Card
+            $this->render_cron_list(); // Hier kommt die Tabelle rein
+            echo '</div>'; // Ende des Grids
         }
         elseif ($tab == 'uploads') {
             echo '<div class="teg-grid"><div class="teg-card">';
@@ -1279,6 +1287,103 @@ if (isset($_POST['teg_mw_reset']) && check_admin_referer('teg_mw_reset')) {
         echo '<div style="margin-top:15px;text-align:right;">';
         echo '<a href="admin.php?page=tegatai-secure" class="button button-primary">' . esc_html__('Go to Dashboard', 'tegatai-secure') . '</a>';
         echo '</div>';
+    }
+
+
+
+    public function ajax_restore_quarantine() {
+        check_ajax_referer('teg_admin_nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error();
+        $id = sanitize_text_field($_POST['id'] ?? '');
+        if (!$id || !class_exists('Tegatai_Quarantine')) wp_send_json_error();
+        $res = Tegatai_Quarantine::restore_file($id);
+        if ($res['ok']) wp_send_json_success();
+        else wp_send_json_error(['msg' => $res['error']]);
+    }
+
+    
+    public function render_cron_list() {
+        echo '<div class="teg-card" style="margin-top:20px; background:#fff; border:1px solid #ccd0d4; padding:20px; border-radius:4px; box-shadow:0 1px 1px rgba(0,0,0,.04);">';
+        echo '<h3 style="margin-top:0;"><span class="dashicons dashicons-clock" style="vertical-align:middle;"></span> ' . esc_html__('Active WP-Cron Jobs', 'tegatai-secure') . '</h3>';
+        echo '<p style="color:#666;">' . esc_html__('View and manage scheduled background tasks.', 'tegatai-secure') . '</p>';
+        echo '<table class="wp-list-table widefat fixed striped" style="margin-top:15px;">';
+        echo '<thead><tr><th>' . esc_html__('Next Run', 'tegatai-secure') . '</th><th>' . esc_html__('Hook (Action)', 'tegatai-secure') . '</th><th>' . esc_html__('Schedule', 'tegatai-secure') . '</th><th>' . esc_html__('Action', 'tegatai-secure') . '</th></tr></thead>';
+        echo '<tbody>';
+
+        $crons = _get_cron_array();
+        $events = [];
+        if (!empty($crons)) {
+            foreach ($crons as $time => $hooks) {
+                foreach ($hooks as $hook => $handlers) {
+                    foreach ($handlers as $handler_key => $handler) {
+                        $events[] = [
+                            'time' => $time,
+                            'hook' => $hook,
+                            'schedule' => empty($handler['schedule']) ? 'Single Event' : $handler['schedule'],
+                            'args' => !empty($handler['args']) ? wp_json_encode($handler['args']) : 'None'
+                        ];
+                    }
+                }
+            }
+        }
+
+        usort($events, function($a, $b) { return $a['time'] <=> $b['time']; });
+        $time_format = get_option('date_format') . ' ' . get_option('time_format');
+        $now = time();
+
+        if (empty($events)) {
+            echo '<tr><td colspan="4">' . esc_html__('No cron jobs found.', 'tegatai-secure') . '</td></tr>';
+        } else {
+            foreach ($events as $e) {
+                $in_seconds = $e['time'] - $now;
+                $in_text = $in_seconds > 0 ? human_time_diff($now, $e['time']) . ' from now' : 'Past due / Running';
+                $color = $in_seconds < 0 ? 'color:#d63638;font-weight:bold;' : 'color:#2271b1;';
+
+                echo '<tr>';
+                echo '<td><strong style="'.$color.'">' . esc_html(wp_date($time_format, $e['time'])) . '</strong><br><small>(' . esc_html($in_text) . ')</small></td>';
+                echo '<td><code>' . esc_html($e['hook']) . '</code></td>';
+                echo '<td>' . esc_html(ucfirst($e['schedule'])) . '</td>';
+                echo '<td><a href="#" class="teg-delete-cron" data-hook="' . esc_attr($e['hook']) . '" style="color:#d63638; text-decoration:none;"><span class="dashicons dashicons-trash" style="vertical-align:middle;"></span> Delete</a></td>';
+                echo '</tr>';
+            }
+        }
+        echo '</tbody></table></div>';
+
+        echo "<script>
+        jQuery(document).ready(function($) {
+            $('.teg-delete-cron').on('click', function(e) {
+                e.preventDefault();
+                if (!confirm('Warning: Deleting a WP cron can affect plugin functionality. Proceed?')) return;
+                var btn = $(this);
+                var hook = btn.data('hook');
+                btn.text('Deleting...');
+                $.post(ajaxurl, { action: 'teg_delete_cron', hook: hook, _ajax_nonce: '" . wp_create_nonce('teg_admin_nonce') . "' }, function(r) {
+                    if (r.success) { btn.closest('tr').fadeOut(); }
+                    else { alert('Error: ' + (r.data.msg || 'Unknown error')); btn.text('Delete'); }
+                });
+            });
+        });
+        </script>";
+    }
+
+    public function ajax_delete_cron() {
+        check_ajax_referer('teg_admin_nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error();
+        $hook = sanitize_text_field($_POST['hook'] ?? '');
+        if (!$hook) wp_send_json_error(['msg' => 'Hook fehlt']);
+        
+        $crons = _get_cron_array();
+        $found = false;
+        foreach ($crons as $time => $hooks) {
+            if (isset($hooks[$hook])) {
+                foreach ($hooks[$hook] as $key => $data) {
+                    wp_unschedule_event($time, $hook, $data['args'] ?? []);
+                    $found = true;
+                }
+            }
+        }
+        if ($found) wp_send_json_success();
+        else wp_send_json_error(['msg' => 'Cron nicht gefunden']);
     }
 
 }

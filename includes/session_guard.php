@@ -9,7 +9,7 @@ class Tegatai_SessionGuard {
     public function save_session_data($logged_in_cookie, $expire, $expiration, $user_id) {
         $token = wp_get_session_token();
         if ($token) {
-            update_user_meta($user_id, 'teg_sess_ip_' . md5($token), $_SERVER['REMOTE_ADDR']);
+            update_user_meta($user_id, 'teg_sess_ip_' . md5($token), (!empty($_SERVER['HTTP_CF_CONNECTING_IP']) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : (!empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]) : $_SERVER['REMOTE_ADDR'])));
             update_user_meta($user_id, 'teg_sess_ua_' . md5($token), md5($_SERVER['HTTP_USER_AGENT']??''));
         }
     }
@@ -17,7 +17,7 @@ class Tegatai_SessionGuard {
         if (!is_user_logged_in()) return; $ops = get_option('tegatai_options'); $uid = get_current_user_id();
         $token = wp_get_session_token();
         if (!$token) return;
-        if (!empty($ops['enable_ip_guard'])) { $s = get_user_meta($uid, 'teg_sess_ip_' . md5($token), true); if ($s && $s !== $_SERVER['REMOTE_ADDR']) $this->kill('IP Change'); }
+        if (!empty($ops['enable_ip_guard'])) { $s = get_user_meta($uid, 'teg_sess_ip_' . md5($token), true); if ($s && $s !== (!empty($_SERVER['HTTP_CF_CONNECTING_IP']) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : (!empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]) : $_SERVER['REMOTE_ADDR']))) $this->kill('IP Change'); }
         if (!empty($ops['enable_browser_guard'])) { $s = get_user_meta($uid, 'teg_sess_ua_' . md5($token), true); if ($s && $s !== md5($_SERVER['HTTP_USER_AGENT']??'')) $this->kill('Browser Change'); }
     }
     private function kill($r) { Tegatai_Logger::log('SESSION', "Killed: $r"); wp_destroy_current_session(); wp_logout(); wp_redirect(wp_login_url().'?logged_out=true&reason=sec'); exit; }

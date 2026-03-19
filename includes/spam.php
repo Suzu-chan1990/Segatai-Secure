@@ -44,15 +44,10 @@ class Tegatai_Spam {
     public function add_timestamp_field($f) { $ts=time(); $h=wp_hash($ts.'teg_salt'); $f['teg_ts']='<input type="hidden" name="teg_ts_val" value="'.$ts.'"/><input type="hidden" name="teg_ts_hash" value="'.$h.'"/>'; return $f; }
     public function check_timestamp($d) {
         if (current_user_can('moderate_comments')) return $d;
-        $ts = $_POST['teg_ts_val'] ?? 0;
-        $h  = $_POST['teg_ts_hash'] ?? '';
-        if (empty($ts) || empty($h) || wp_hash($ts.'teg_salt') !== $h) {
-            Tegatai_Logger::log('SPAM', 'Bot Timer missing/invalid');
-            wp_die('Spam detected.', 'Spam', ['response'=>403]);
-        }
-        if ((time() - $ts) < 3) {
-            Tegatai_Logger::log('SPAM', 'Bot Timer');
-            wp_die('Too fast.', 'Spam', ['response'=>403]);
+        $time_spent = intval($_POST['teg_js_time'] ?? 0);
+        if ($time_spent < 3000) {
+            if (class_exists('Tegatai_Logger')) Tegatai_Logger::log('SPAM', 'Bot Timer (Too fast or JS disabled)');
+            wp_die('Spam detected. Please enable JavaScript or type slower.', 'Spam', ['response'=>403]);
         }
         return $d;
     }

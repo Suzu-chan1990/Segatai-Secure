@@ -26,7 +26,47 @@ if (function_exists('get_option')) {
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+
+class Tegatai_Redis {
+    private static $redis = null;
+    public static function init() {
+        if (class_exists('Redis')) {
+            try {
+                self::$redis = new Redis();
+                // Timeout von 1 Sekunde, um Seitenaufbau bei Redis-Ausfall nicht zu blockieren
+                if (!@self::$redis->connect('127.0.0.1', 6379, 1)) {
+                    self::$redis = null;
+                }
+            } catch (Exception $e) { self::$redis = null; }
+        }
+    }
+    public static function set($key, $val, $ttl=3600) {
+        if (self::$redis) { return self::$redis->setex('tegatai_'.$key, $ttl, $val); }
+        return Tegatai_Redis::set($key, $val, $ttl);
+    }
+    public static function get($key) {
+        if (self::$redis) { return self::$redis->get('tegatai_'.$key); }
+        return Tegatai_Redis::get($key);
+    }
+}
+Tegatai_Redis::init();
+
 class Tegatai_Firewall {
+    private $redis = null;
+    private $use_redis = false;
+
+    private function connect_redis() {
+        if ($this->redis !== null) return $this->use_redis;
+        if (class_exists('Redis')) {
+            try {
+                $this->redis = new Redis();
+                if (@$this->redis->connect('127.0.0.1', 6371)) { // Standardport
+                    $this->use_redis = true;
+                }
+            } catch (Exception $e) { $this->use_redis = false; }
+        }
+        return $this->use_redis;
+    }
     private $patterns = ['/union\s+select/i', '/eval\s*\(/i', '/base64_decode/i', '/<script>/i', '/(\.\.\/)/', '/1=1/', '/javascript:/i', '/onload=/', '/wp-config\.php/i'];
     private $bad_agents = ['curl', 'wget', 'python-requests', 'libwww-perl', 'sqlmap', 'nikto', 'masscan'];
     private $ai_bots = ['gptbot', 'chatgpt-user', 'anthropic', 'claude', 'cohere', 'perplexity', 'omgili'];
