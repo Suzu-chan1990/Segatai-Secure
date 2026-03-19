@@ -58,4 +58,53 @@ class Tegatai_Core_Integrity {
 
         return ['ok'=>true, 'version'=>$wp_version, 'bad'=>$bad, 'missing'=>$missing, 'extra'=>$extra];
     }
+
+    /**
+     * Lädt die Originaldatei von WP.org herunter und überschreibt die lokale Datei.
+     */
+    public static function heal_file($file_path) {
+        global $wp_version;
+        
+        // Sicherheit: Pfad säubern und sicherstellen, dass wir nicht aus WP ausbrechen
+        $clean_path = ltrim(str_replace('\\', '/', $file_path), '/');
+        
+        // Nur absolute WP-Core Pfade zulassen
+        if (strpos($clean_path, 'wp-admin/') !== 0 && strpos($clean_path, 'wp-includes/') !== 0 && strpos($clean_path, '.php') === false) {
+            return ['ok' => false, 'error' => __('Security warning: Invalid core path.', 'tegatai-secure')];
+        }
+        
+        $abs_file = ABSPATH . $clean_path;
+        
+        // Die originale Datei vom offiziellen WP.org SVN Server anfordern
+        $url = "https://core.svn.wordpress.org/tags/{$wp_version}/{$clean_path}";
+        $response = wp_remote_get($url, ['timeout' => 15]);
+        
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            return ['ok' => false, 'error' => sprintf(__('Could not load original file from WordPress.org (HTTP %d).', 'tegatai-secure'), wp_remote_retrieve_response_code($response))];
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        if (empty($body)) {
+            return ['ok' => false, 'error' => __('Downloaded file is empty. Aborting.', 'tegatai-secure')];
+        }
+        
+        // Zielordner sicherstellen, falls es eine gelöschte Datei war
+        $dir = dirname($abs_file);
+        if (!is_dir($dir)) {
+            @wp_mkdir_p($dir);
+        }
+        
+        // Überschreiben
+        $put = @file_put_contents($abs_file, $body);
+        if ($put === false) {
+            return ['ok' => false, 'error' => __('Missing write permissions. The file could not be overwritten.', 'tegatai-secure')];
+        }
+        
+        if (class_exists('Tegatai_Logger')) {
+            Tegatai_Logger::log('HEAL', sprintf(__('Core file successfully repaired: %s', 'tegatai-secure'), $clean_path));
+        }
+        
+        return ['ok' => true];
+    }
+
 }

@@ -59,6 +59,10 @@ class Tegatai_Admin {
     public function __construct() {
         add_action('wp_ajax_teg_restore_quarantine', [$this, 'ajax_restore_quarantine']);
         add_action('wp_ajax_teg_delete_cron', [$this, 'ajax_delete_cron']);
+        add_action('admin_post_tegatai_export_config', [$this, 'export_config']);
+        add_action('wp_ajax_teg_import_config', [$this, 'ajax_import_config']);
+        add_action('wp_ajax_teg_deep_clean', [$this, 'ajax_deep_clean']);
+        add_action('wp_ajax_teg_heal_core', [$this, 'ajax_heal_core']);
 
         add_action('admin_menu', [$this, 'add_menu']);
         add_action('wp_dashboard_setup', [$this, 'add_dashboard_widgets']);
@@ -711,7 +715,40 @@ class Tegatai_Admin {
         echo '</select>';
         echo '<input type="submit" class="button button-primary" style="margin-top:10px;" value="' . esc_attr__('Save', 'tegatai-secure') . '" >';
         echo '</form>';
-        echo '</div></div>'; }
+        echo '</div>'; // Ende 2FA Card
+        
+        // --- CARD 4: Deep Clean ---
+        echo '<div class="teg-card" style="grid-column: 1 / -1;">';
+        echo '<h3><span class="dashicons dashicons-database" style="vertical-align:middle;"></span> ' . esc_html__('System Deep Clean', 'tegatai-secure') . '</h3>';
+        echo '<p class="teg-switch-desc" style="margin-bottom:15px;">' . wp_kses_post(__('Manual database cleanup. Deletes expired transients, spam comments, old post revisions, and optimizes table overhead. <strong>This process only runs after manual click.</strong>', 'tegatai-secure')) . '</p>';
+        echo '<button id="teg-run-clean" class="button button-primary"><span class="dashicons dashicons-update-alt" style="vertical-align:middle; margin-top:3px;"></span> ' . esc_html__('Run Deep Clean Now', 'tegatai-secure') . '</button>';
+        echo '<div id="teg-clean-results" style="display:none; margin-top:15px; padding:15px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; color:#166534; font-size:13px; line-height:1.6;"></div>';
+        echo '<script>
+        jQuery(document).ready(function($) {
+            $("#teg-run-clean").on("click", function(e) {
+                e.preventDefault();
+                var btn = $(this);
+                if (!confirm("' . esc_js(__('Do you want to clean the database now? (This may take a few seconds on large sites)', 'tegatai-secure')) . '")) return;
+                btn.prop("disabled", true).html("<span class=\'dashicons dashicons-update\' style=\'vertical-align:middle; margin-top:3px;\'></span> Cleaning...");
+                $("#teg-clean-results").slideUp();
+                
+                $.post(ajaxurl, { action: "teg_deep_clean", _ajax_nonce: "' . wp_create_nonce('teg_admin_nonce') . '" }, function(r) {
+                    btn.prop("disabled", false).html("<span class=\'dashicons dashicons-update-alt\' style=\'vertical-align:middle; margin-top:3px;\'></span> ' . esc_html__('Run Deep Clean Now', 'tegatai-secure') . '");
+                    if (r.success) {
+                        var html = "<strong>" + "' . esc_js(__('Cleanup successful! Statistics:', 'tegatai-secure')) . '" + "</strong><br><ul style=\'margin-top:8px; margin-bottom:0;\'>";
+                        $.each(r.data.stats, function(i, stat) { html += "<li>" + stat + "</li>"; });
+                        html += "</ul>";
+                        $("#teg-clean-results").html(html).slideDown();
+                    } else {
+                        alert("' . esc_js(__('Error during cleanup.', 'tegatai-secure')) . '");
+                    }
+                });
+            });
+        });
+        </script>';
+        echo '</div>'; // Ende Deep Clean Card
+        echo '</div>'; // Ende Grid
+        }
         elseif ($tab == 'headers') { echo '<div class="teg-grid"><div class="teg-card"><h3>' . esc_html__('HTTP Security Headers', 'tegatai-secure') . '</h3>'; $this->render_toggle('header_xfo', esc_html__('X-Frame-Options', 'tegatai-secure'), esc_html__('Prevents your site from being framed (Clickjacking protection).', 'tegatai-secure')); $this->render_toggle('header_nosniff', esc_html__('X-Content-Type-Options', 'tegatai-secure'), esc_html__('Stops browsers from MIME-sniffing.', 'tegatai-secure')); $this->render_toggle('header_xss', esc_html__('X-XSS-Protection', 'tegatai-secure'), esc_html__('Enables legacy browser XSS filtering.', 'tegatai-secure')); $this->render_toggle('header_hsts', esc_html__('HSTS (SSL)', 'tegatai-secure'), esc_html__('Enforces strict HTTPS connections.', 'tegatai-secure')); $this->render_toggle('header_ref', esc_html__('Referrer Policy', 'tegatai-secure'), esc_html__('Controls how much referrer information is passed to external sites.', 'tegatai-secure')); $this->render_toggle('header_permissions', esc_html__('Permissions-Policy', 'tegatai-secure'), esc_html__('Restricts access to browser features (camera, microphone).', 'tegatai-secure')); $this->render_toggle('header_csp', esc_html__('Content Security Policy', 'tegatai-secure'), esc_html__('Mitigates XSS by controlling resource loading sources.', 'tegatai-secure')); echo '</div></div>'; }
         elseif ($tab == 'backups') { 
         echo '<div class="teg-grid">';
@@ -795,7 +832,7 @@ class Tegatai_Admin {
         // --- CARD 3: FTP Panel ---
         echo '<div class="teg-card" style="grid-column: 1 / -1; background: #fafafa; border: 1px solid #e5e7eb;">';
         echo '<h3 style="border-bottom:1px solid #e5e7eb; padding-bottom:10px;"><span class="dashicons dashicons-cloud-upload"></span> ' . esc_html__('Remote FTP Setup (Encrypted)', 'tegatai-secure') . '</h3>';
-        echo '<p class="teg-switch-desc" style="margin-bottom:15px;">Sende deine Backups automatisch auf einen externen FTP-Server. Alle Zugangsdaten werden mit <strong>AES-256-CBC</strong> in deiner Datenbank verschlüsselt abgelegt.</p>';
+        echo '<p class="teg-switch-desc" style="margin-bottom:15px;">' . wp_kses_post(__('Send your backups automatically to an external FTP server. All credentials are encrypted with <strong>AES-256-CBC</strong> in your database.', 'tegatai-secure')) . '</p>';
         
         $key = defined('SECURE_AUTH_KEY') ? SECURE_AUTH_KEY : 'tegatai_fallback_key';
         $ops = get_option('tegatai_ftp_settings', []);
@@ -850,7 +887,7 @@ class Tegatai_Admin {
         // --- CARD 2: Temporäre Support-Zugänge ---
         echo '<div class="teg-card">';
         echo '<h3>' . esc_html__('Temporary Admin Accounts', 'tegatai-secure') . '</h3>';
-        echo '<p class="teg-switch-desc" style="margin-bottom:15px;">Erstelle einen zeitlich begrenzten Admin-Account. Der Nutzer erhält einen sicheren Login-Link per E-Mail. Nach Ablauf der Zeit löscht sich der Account selbstständig restlos.</p>';
+        echo '<p class="teg-switch-desc" style="margin-bottom:15px;">' . esc_html__('Create a temporary admin account. The user receives a secure login link via email. After the time expires, the account deletes itself completely.', 'tegatai-secure') . '</p>';
         
         if (isset($_GET['msg']) && $_GET['msg'] == 'temp_created') {
             echo '<div style="padding:10px; background:#dcfce7; color:#15803d; border-radius:4px; margin-bottom:15px; border:1px solid #bbf7d0; font-weight:600;">' . esc_html__('Temporary access generated and email sent!', 'tegatai-secure') . '</div>';
@@ -868,7 +905,63 @@ class Tegatai_Admin {
         
         echo '<input type="submit" class="button button-primary" style="margin-top:10px;" value="' . esc_attr__('Generate & Send Access', 'tegatai-secure') . '" >';
         echo '</form>';
+        echo '</div>'; // Ende Temp Admin Card
+        
+        // --- CARD 3: Config Export/Import ---
+        echo '<div class="teg-card" style="grid-column: 1 / -1;">';
+        echo '<h3 style="border-bottom:1px solid #e5e7eb; padding-bottom:10px;"><span class="dashicons dashicons-download"></span> ' . esc_html__('Configuration Export & Import', 'tegatai-secure') . '</h3>';
+        echo '<p class="teg-switch-desc" style="margin-bottom:15px;">' . esc_html__('Transfer your perfect settings (including whitelists and regex rules) to other websites with one click.', 'tegatai-secure') . '</p>';
+        
+        echo '<div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;">';
+        
+        // Export Box
+        echo '<div style="flex:1; min-width:280px; background:#f9fafb; padding:20px; border-radius:8px; border:1px solid #e5e7eb;">';
+        echo '<h4>' . esc_html__('Export Settings', 'tegatai-secure') . '</h4>';
+        echo '<p style="font-size:12px; color:#6b7280; margin-bottom:15px;">' . esc_html__('Downloads a .json file with all current settings.', 'tegatai-secure') . '</p>';
+        echo '<a href="' . admin_url('admin-post.php?action=tegatai_export_config&_wpnonce=' . wp_create_nonce('teg_export_nonce')) . '" class="button button-secondary"><span class="dashicons dashicons-download" style="vertical-align:middle; margin-top:3px;"></span> ' . esc_html__('Download Config (.json)', 'tegatai-secure') . '</a>';
         echo '</div>';
+        
+        // Import Box
+        echo '<div style="flex:1; min-width:280px; background:#f9fafb; padding:20px; border-radius:8px; border:1px solid #e5e7eb;">';
+        echo '<h4>' . esc_html__('Import Settings', 'tegatai-secure') . '</h4>';
+        echo '<p style="font-size:12px; color:#6b7280; margin-bottom:15px;">' . esc_html__('Select a .json file to configure this site instantly.', 'tegatai-secure') . '</p>';
+        echo '<input type="file" id="teg-import-file" accept=".json" style="margin-bottom:10px; font-size:13px; max-width:100%;">';
+        echo '<br><button id="teg-run-import" class="button button-primary"><span class="dashicons dashicons-upload" style="vertical-align:middle; margin-top:3px;"></span> ' . esc_html__('Import & Apply', 'tegatai-secure') . '</button>';
+        echo '</div>';
+        
+        echo '</div>'; // Ende Flex
+        
+        echo '<script>
+        jQuery(document).ready(function($) {
+            $("#teg-run-import").on("click", function(e) {
+                e.preventDefault();
+                var fileInput = document.getElementById("teg-import-file");
+                if (fileInput.files.length === 0) { alert("' . esc_js(__('Please select a .json file first!', 'tegatai-secure')) . '"); return; }
+                if (!confirm("' . esc_js(__('WARNING: This will overwrite all current plugin settings. Continue?', 'tegatai-secure')) . '")) return;
+                
+                var file = fileInput.files[0];
+                var reader = new FileReader();
+                var btn = $(this);
+                btn.prop("disabled", true).text("Importing...");
+                
+                reader.onload = function(e) {
+                    var jsonContent = e.target.result;
+                    $.post(ajaxurl, { action: "teg_import_config", json: jsonContent, _ajax_nonce: "' . wp_create_nonce('teg_admin_nonce') . '" }, function(r) {
+                        if (r.success) {
+                            alert("' . esc_js(__('Successfully imported! The page will now reload.', 'tegatai-secure')) . '");
+                            location.reload();
+                        } else {
+                            alert("' . esc_js(__('Import error: ', 'tegatai-secure')) . '" + (r.data.msg || "' . esc_js(__('Unknown error', 'tegatai-secure')) . '"));
+                            btn.prop("disabled", false).html("<span class=\'dashicons dashicons-upload\' style=\'vertical-align:middle; margin-top:3px;\'></span> Import & Apply");
+                        }
+                    });
+                };
+                reader.readAsText(file);
+            });
+        });
+        </script>';
+        
+        echo '</div>'; // Ende Export/Import Card
         
         echo '</div>'; 
     }
@@ -921,6 +1014,44 @@ class Tegatai_Admin {
                 echo '<li><strong>' . esc_html__('New', 'tegatai-secure') . ':</strong> ' . esc_html((string)$c_new) . '</li>';
                 echo '<li><strong>' . esc_html__('Deleted', 'tegatai-secure') . ':</strong> ' . esc_html((string)$c_del) . '</li>';
                 echo '</ul>';
+                
+                // --- NEU: Tabelle mit Heil-Button für defekte Dateien ---
+                if (!empty($bad) || !empty($missing)) {
+                    $corrupted = array_unique(array_merge($bad, $missing));
+                    echo '<h4 style="margin-top:20px; border-bottom:1px solid #eee; padding-bottom:8px;">' . esc_html__('Corrupted or Missing Files', 'tegatai-secure') . '</h4>';
+                    echo '<div class="teg-table"><table class="widefat striped"><thead><tr><th>' . esc_html__('File Path', 'tegatai-secure') . '</th><th style="width:120px;">' . esc_html__('Action', 'tegatai-secure') . '</th></tr></thead><tbody>';
+                    
+                    foreach ($corrupted as $b) {
+                        echo '<tr>';
+                        echo '<td><code>' . esc_html($b) . '</code></td>';
+                        echo '<td><a href="#" class="teg-heal-core" data-file="'.esc_attr($b).'" style="color:#10b981; font-weight:bold; text-decoration:none;"><span class="dashicons dashicons-admin-tools" style="vertical-align:middle;"></span> Heal</a></td>';
+                        echo '</tr>';
+                    }
+                    
+                    echo '</tbody></table></div>';
+                    
+                    // JavaScript für den Heal-Button
+                    echo '<script>
+                    jQuery(document).ready(function($) {
+                        $(".teg-heal-core").on("click", function(e) {
+                            e.preventDefault();
+                            if(!confirm("' . esc_js(__('Do you want to overwrite this file with the clean original version from WordPress.org?', 'tegatai-secure')) . '")) return;
+                            var btn = $(this);
+                            var file = btn.data("file");
+                            btn.html("<span class=\'dashicons dashicons-update\' style=\'vertical-align:middle;\'></span> Healing...");
+                            
+                            $.post(ajaxurl, { action: "teg_heal_core", file: file, _ajax_nonce: "' . wp_create_nonce('teg_admin_nonce') . '" }, function(r) {
+                                if (r.success) {
+                                    btn.closest("tr").css("background", "#dcfce7").fadeOut(800);
+                                } else {
+                                    alert("' . esc_js(__('Repair error: ', 'tegatai-secure')) . '" + (r.data.msg || "' . esc_js(__('Unknown', 'tegatai-secure')) . '"));
+                                    btn.html("<span class=\'dashicons dashicons-admin-tools\' style=\'vertical-align:middle;\'></span> Heal");
+                                }
+                            });
+                        });
+                    });
+                    </script>';
+                }
 
                 $show = function($label, $arr) {
                     if (empty($arr) || !is_array($arr)) return;
@@ -1170,6 +1301,44 @@ if (isset($_POST['teg_mw_reset']) && check_admin_referer('teg_mw_reset')) {
                 echo '<li><strong>' . esc_html__('Missing', 'tegatai-secure') . ':</strong> ' . esc_html((string)count($missing)) . '</li>';
                 echo '<li><strong>' . esc_html__('Unexpected', 'tegatai-secure') . ':</strong> ' . esc_html((string)count($extra)) . '</li>';
                 echo '</ul>';
+                
+                // --- NEU: Tabelle mit Heil-Button für defekte Dateien ---
+                if (!empty($bad) || !empty($missing)) {
+                    $corrupted = array_unique(array_merge($bad, $missing));
+                    echo '<h4 style="margin-top:20px; border-bottom:1px solid #eee; padding-bottom:8px;">' . esc_html__('Corrupted or Missing Files', 'tegatai-secure') . '</h4>';
+                    echo '<div class="teg-table"><table class="widefat striped"><thead><tr><th>' . esc_html__('File Path', 'tegatai-secure') . '</th><th style="width:120px;">' . esc_html__('Action', 'tegatai-secure') . '</th></tr></thead><tbody>';
+                    
+                    foreach ($corrupted as $b) {
+                        echo '<tr>';
+                        echo '<td><code>' . esc_html($b) . '</code></td>';
+                        echo '<td><a href="#" class="teg-heal-core" data-file="'.esc_attr($b).'" style="color:#10b981; font-weight:bold; text-decoration:none;"><span class="dashicons dashicons-admin-tools" style="vertical-align:middle;"></span> Heal</a></td>';
+                        echo '</tr>';
+                    }
+                    
+                    echo '</tbody></table></div>';
+                    
+                    // JavaScript für den Heal-Button
+                    echo '<script>
+                    jQuery(document).ready(function($) {
+                        $(".teg-heal-core").on("click", function(e) {
+                            e.preventDefault();
+                            if(!confirm("' . esc_js(__('Do you want to overwrite this file with the clean original version from WordPress.org?', 'tegatai-secure')) . '")) return;
+                            var btn = $(this);
+                            var file = btn.data("file");
+                            btn.html("<span class=\'dashicons dashicons-update\' style=\'vertical-align:middle;\'></span> Healing...");
+                            
+                            $.post(ajaxurl, { action: "teg_heal_core", file: file, _ajax_nonce: "' . wp_create_nonce('teg_admin_nonce') . '" }, function(r) {
+                                if (r.success) {
+                                    btn.closest("tr").css("background", "#dcfce7").fadeOut(800);
+                                } else {
+                                    alert("' . esc_js(__('Repair error: ', 'tegatai-secure')) . '" + (r.data.msg || "' . esc_js(__('Unknown', 'tegatai-secure')) . '"));
+                                    btn.html("<span class=\'dashicons dashicons-admin-tools\' style=\'vertical-align:middle;\'></span> Heal");
+                                }
+                            });
+                        });
+                    });
+                    </script>';
+                }
             } else {
                 echo '<p class="teg-muted">' . esc_html__('Run the check to see results.', 'tegatai-secure') . '</p>';
             }
@@ -1197,9 +1366,9 @@ if (isset($_POST['teg_mw_reset']) && check_admin_referer('teg_mw_reset')) {
             echo '<hr style="margin:20px 0; border:0; border-top:1px solid #eee;">';
             echo '<form onsubmit="tegSaveForm(this, event)">';
             echo '<label class="teg-switch-label">' . esc_html__('Options Whitelist (Exceptions)', 'tegatai-secure') . '</label>';
-            echo '<p class="teg-switch-desc">Pro Zeile ein Teil des Options-Namens (z.B. <code>_transient_</code> oder <code>wp_cache</code>). Optionen, die diese Wörter enthalten, werden vom Scanner ignoriert.</p>';
+            echo '<p class="teg-switch-desc">' . wp_kses_post(__('One option name part per line (e.g., <code>_transient_</code> or <code>wp_cache</code>). Options containing these words will be ignored.', 'tegatai-secure')) . '</p>';
             echo '<textarea name="tegatai_options[option_whitelist_names]" class="teg-form-input" style="height:100px;" placeholder="_transient_&#10;elementor_">'.esc_textarea($this->get_opt('option_whitelist_names', '')).'</textarea>';
-            echo '<input type="submit" class="button button-primary" value="Ausnahmen Speichern" style="margin-top:10px;">';
+            echo '<input type="submit" class="button button-primary" value="' . esc_attr__('Save Exceptions', 'tegatai-secure') . '"  style="margin-top:10px;">';
             echo '</form>';
             
             echo '</div>'; // Ende der ersten Card
@@ -1218,9 +1387,9 @@ if (isset($_POST['teg_mw_reset']) && check_admin_referer('teg_mw_reset')) {
             echo '<hr style="margin:20px 0; border:0; border-top:1px solid #eee;">';
             echo '<form onsubmit="tegSaveForm(this, event)">';
             echo '<label class="teg-switch-label">' . esc_html__('Cron Hooks Whitelist (Exceptions)', 'tegatai-secure') . '</label>';
-            echo '<p class="teg-switch-desc">Pro Zeile ein Suchbegriff (z.B. <code>wp_mail</code> oder <code>backup</code>). Cron-Hooks, die diese Wörter enthalten, werden vom Scanner komplett ignoriert.</p>';
+            echo '<p class="teg-switch-desc">' . wp_kses_post(__('One search term per line (e.g., <code>wp_mail</code> or <code>backup</code>). Cron hooks containing these words will be completely ignored.', 'tegatai-secure')) . '</p>';
             echo '<textarea name="tegatai_options[cron_whitelist_hooks]" class="teg-form-input" style="height:100px;" placeholder="mailpoet&#10;woocommerce">'.esc_textarea($this->get_opt('cron_whitelist_hooks', '')).'</textarea>';
-            echo '<input type="submit" class="button button-primary" value="Ausnahmen Speichern" style="margin-top:10px;">';
+            echo '<input type="submit" class="button button-primary" value="' . esc_attr__('Save Exceptions', 'tegatai-secure') . '"  style="margin-top:10px;">';
             echo '</form>';
             
             echo '</div>'; // Ende der ersten Card
@@ -1364,6 +1533,75 @@ if (isset($_POST['teg_mw_reset']) && check_admin_referer('teg_mw_reset')) {
             });
         });
         </script>";
+    }
+
+    
+    public function export_config() {
+        if (!current_user_can('manage_options') || !isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'teg_export_nonce')) wp_die('Forbidden');
+        $ops = get_option($this->options_slug, []);
+        header('Content-Type: application/json');
+        header('Content-Disposition: attachment; filename="tegatai-config-'.date('Y-m-d').'.json"');
+        echo wp_json_encode($ops);
+        exit;
+    }
+
+    public function ajax_import_config() {
+        check_ajax_referer('teg_admin_nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error();
+        $json = stripslashes($_POST['json'] ?? '');
+        $data = json_decode($json, true);
+        if (!$data || !is_array($data)) wp_send_json_error(['msg' => __('Invalid JSON format.', 'tegatai-secure')]);
+        update_option($this->options_slug, $data);
+        wp_send_json_success();
+    }
+
+    public function ajax_deep_clean() {
+        check_ajax_referer('teg_admin_nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error();
+        global $wpdb;
+        $stats = [];
+        
+        // 1. Expired Transients
+        $time = time();
+        $sql = "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '\_transient\_timeout\_%' AND option_value < %d";
+        $expired = $wpdb->get_col($wpdb->prepare($sql, $time));
+        $del_trans = 0;
+        foreach ($expired as $t) {
+            $key = str_replace('_transient_timeout_', '', $t);
+            delete_transient($key);
+            $del_trans++;
+        }
+        if ($del_trans > 0) $stats[] = sprintf(__('🗑️ <strong>%d</strong> expired transients deleted.', 'tegatai-secure'), $del_trans);
+
+        // 2. Spam & Trash Kommentare
+        $spam_del = $wpdb->query("DELETE FROM {$wpdb->comments} WHERE comment_approved = 'spam' OR comment_approved = 'trash'");
+        if ($spam_del > 0) $stats[] = sprintf(__('🗑️ <strong>%d</strong> spam/trash comments removed.', 'tegatai-secure'), $spam_del);
+
+        // 3. Post Revisions
+        $rev_del = $wpdb->query("DELETE a,b,c FROM {$wpdb->posts} a LEFT JOIN {$wpdb->term_relationships} b ON ( a.ID = b.object_id ) LEFT JOIN {$wpdb->postmeta} c ON ( a.ID = c.post_id ) WHERE a.post_type = 'revision'");
+        if ($rev_del > 0) $stats[] = sprintf(__('🗑️ <strong>%d</strong> old post revisions cleaned.', 'tegatai-secure'), $rev_del);
+
+        // 4. Optimize Tables
+        $tables = $wpdb->get_col("SHOW TABLES");
+        foreach ($tables as $table) {
+            $wpdb->query("OPTIMIZE TABLE `$table`");
+        }
+        $stats[] = __('⚡ Database tables defragmented (overhead released).', 'tegatai-secure');
+
+        if (empty($stats)) $stats[] = __('Everything was already spotless! No cleanup needed.', 'tegatai-secure');
+
+        wp_send_json_success(['stats' => $stats]);
+    }
+
+    
+    public function ajax_heal_core() {
+        check_ajax_referer('teg_admin_nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error();
+        $file = sanitize_text_field($_POST['file'] ?? '');
+        if (!$file || !class_exists('Tegatai_Core_Integrity')) wp_send_json_error();
+        $res = Tegatai_Core_Integrity::heal_file($file);
+        if (isset($res['ok']) && $res['ok']) wp_send_json_success();
+        else wp_send_json_error(['msg' => $res['error'] ?? 'Unbekannter Fehler']);
     }
 
     public function ajax_delete_cron() {

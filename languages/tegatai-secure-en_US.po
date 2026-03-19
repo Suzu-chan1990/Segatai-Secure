@@ -5,8 +5,8 @@ msgstr ""
 "PO-Revision-Date: 2026-02-26 22:21:40\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8
-"
+"Content-Type: text/plain; charset=UTF-8\n"
+
 
 msgid "Auto backup"
 msgstr "Auto backup"
@@ -580,8 +580,8 @@ msgstr "NO"
 msgid "Manual Nginx Rules (Copy & Paste):"
 msgstr "Manual Nginx Rules (Copy & Paste):"
 
-msgid "Please click \'Write rules to server config\' below first."
-msgstr "Please click \'Write rules to server config\' below first."
+msgid "Please click 'Write rules to server config' below first."
+msgstr "Please click 'Write rules to server config' below first."
 
 msgid "Shows the <em>actually</em> delivered response headers (incl. Nginx/CDN/Cache). This helps you detect conflicts or duplications."
 msgstr "Shows the <em>actually</em> delivered response headers (incl. Nginx/CDN/Cache). This helps you detect conflicts or duplications."
@@ -619,8 +619,8 @@ msgstr "Whitelist (Allow selected only)"
 msgid "Country Codes (Comma separated)"
 msgstr "Country Codes (Comma separated)"
 
-msgid "Example: "US, UK, CA" allows only English speaking countries."
-msgstr "Example: "US, UK, CA" allows only English speaking countries."
+msgid "Example: \"US, UK, CA\" allows only English speaking countries."
+msgstr "Example: \"US, UK, CA\" allows only English speaking countries."
 
 msgid "Save Settings"
 msgstr "Save Settings"
@@ -717,3 +717,96 @@ msgstr "Blocked"
 
 msgid "Traffic"
 msgstr "Traffic"
+
+msgid "One option name part per line (e.g., <code>_transient_</code> or <code>wp_cache</code>). Options containing these words will be ignored."
+msgstr "One option name part per line (e.g., <code>_transient_</code> or <code>wp_cache</code>). Options containing these words will be ignored."
+
+msgid "Save Exceptions"
+msgstr "Save Exceptions"
+
+msgid "One search term per line (e.g., <code>wp_mail</code> or <code>backup</code>). Cron hooks containing these words will be completely ignored."
+msgstr "One search term per line (e.g., <code>wp_mail</code> or <code>backup</code>). Cron hooks containing these words will be completely ignored."
+
+msgid "Manual database cleanup. Deletes expired transients, spam comments, old post revisions, and optimizes table overhead. <strong>This process only runs after manual click.</strong>"
+msgstr "Manual database cleanup. Deletes expired transients, spam comments, old post revisions, and optimizes table overhead. <strong>This process only runs after manual click.</strong>"
+
+msgid "Transfer your perfect settings (including whitelists and regex rules) to other websites with one click."
+msgstr "Transfer your perfect settings (including whitelists and regex rules) to other websites with one click."
+
+msgid "Downloads a .json file with all current settings."
+msgstr "Downloads a .json file with all current settings."
+
+msgid "Select a .json file to configure this site instantly."
+msgstr "Select a .json file to configure this site instantly."
+
+msgid "Create a temporary admin account. The user receives a secure login link via email. After the time expires, the account deletes itself completely."
+msgstr "Create a temporary admin account. The user receives a secure login link via email. After the time expires, the account deletes itself completely."
+
+msgid "Send your backups automatically to an external FTP server. All credentials are encrypted with <strong>AES-256-CBC</strong> in your database."
+msgstr "Send your backups automatically to an external FTP server. All credentials are encrypted with <strong>AES-256-CBC</strong> in your database."
+
+msgid "Do you want to clean the database now? (This may take a few seconds on large sites)"
+msgstr "Do you want to clean the database now? (This may take a few seconds on large sites)"
+
+msgid "Error during cleanup."
+msgstr "Error during cleanup."
+
+msgid "Cleanup successful! Statistics:"
+msgstr "Cleanup successful! Statistics:"
+
+msgid "Please select a .json file first!"
+msgstr "Please select a .json file first!"
+
+msgid "WARNING: This will overwrite all current plugin settings. Continue?"
+msgstr "WARNING: This will overwrite all current plugin settings. Continue?"
+
+msgid "Successfully imported! The page will now reload."
+msgstr "Successfully imported! The page will now reload."
+
+msgid "Import error: "
+msgstr "Import error: "
+
+msgid "Unknown error"
+msgstr "Unknown error"
+
+msgid "Do you want to overwrite this file with the clean original version from WordPress.org?"
+msgstr "Do you want to overwrite this file with the clean original version from WordPress.org?"
+
+msgid "Repair error: "
+msgstr "Repair error: "
+
+msgid "Unknown"
+msgstr "Unknown"
+
+msgid "Invalid JSON format."
+msgstr "Invalid JSON format."
+
+msgid "🗑️ <strong>%d</strong> expired transients deleted."
+msgstr "🗑️ <strong>%d</strong> expired transients deleted."
+
+msgid "🗑️ <strong>%d</strong> spam/trash comments removed."
+msgstr "🗑️ <strong>%d</strong> spam/trash comments removed."
+
+msgid "🗑️ <strong>%d</strong> old post revisions cleaned."
+msgstr "🗑️ <strong>%d</strong> old post revisions cleaned."
+
+msgid "⚡ Database tables defragmented (overhead released)."
+msgstr "⚡ Database tables defragmented (overhead released)."
+
+msgid "Everything was already spotless! No cleanup needed."
+msgstr "Everything was already spotless! No cleanup needed."
+
+msgid "Security warning: Invalid core path."
+msgstr "Security warning: Invalid core path."
+
+msgid "Could not load original file from WordPress.org (HTTP %d)."
+msgstr "Could not load original file from WordPress.org (HTTP %d)."
+
+msgid "Downloaded file is empty. Aborting."
+msgstr "Downloaded file is empty. Aborting."
+
+msgid "Missing write permissions. The file could not be overwritten."
+msgstr "Missing write permissions. The file could not be overwritten."
+
+msgid "Core file successfully repaired: %s"
+msgstr "Core file successfully repaired: %s"

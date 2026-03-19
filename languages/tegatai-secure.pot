@@ -571,7 +571,7 @@ msgstr ""
 msgid "Manual Nginx Rules (Copy & Paste):"
 msgstr ""
 
-msgid "Please click \'Write rules to server config\' below first."
+msgid "Please click 'Write rules to server config' below first."
 msgstr ""
 
 msgid "Shows the <em>actually</em> delivered response headers (incl. Nginx/CDN/Cache). This helps you detect conflicts or duplications."
@@ -610,7 +610,7 @@ msgstr ""
 msgid "Country Codes (Comma separated)"
 msgstr ""
 
-msgid "Example: "US, UK, CA" allows only English speaking countries."
+msgid "Example: \"US, UK, CA\" allows only English speaking countries."
 msgstr ""
 
 msgid "Save Settings"
@@ -707,4 +707,97 @@ msgid "Blocked"
 msgstr ""
 
 msgid "Traffic"
+msgstr ""
+
+msgid "One option name part per line (e.g., <code>_transient_</code> or <code>wp_cache</code>). Options containing these words will be ignored."
+msgstr ""
+
+msgid "Save Exceptions"
+msgstr ""
+
+msgid "One search term per line (e.g., <code>wp_mail</code> or <code>backup</code>). Cron hooks containing these words will be completely ignored."
+msgstr ""
+
+msgid "Manual database cleanup. Deletes expired transients, spam comments, old post revisions, and optimizes table overhead. <strong>This process only runs after manual click.</strong>"
+msgstr ""
+
+msgid "Transfer your perfect settings (including whitelists and regex rules) to other websites with one click."
+msgstr ""
+
+msgid "Downloads a .json file with all current settings."
+msgstr ""
+
+msgid "Select a .json file to configure this site instantly."
+msgstr ""
+
+msgid "Create a temporary admin account. The user receives a secure login link via email. After the time expires, the account deletes itself completely."
+msgstr ""
+
+msgid "Send your backups automatically to an external FTP server. All credentials are encrypted with <strong>AES-256-CBC</strong> in your database."
+msgstr ""
+
+msgid "Do you want to clean the database now? (This may take a few seconds on large sites)"
+msgstr ""
+
+msgid "Error during cleanup."
+msgstr ""
+
+msgid "Cleanup successful! Statistics:"
+msgstr ""
+
+msgid "Please select a .json file first!"
+msgstr ""
+
+msgid "WARNING: This will overwrite all current plugin settings. Continue?"
+msgstr ""
+
+msgid "Successfully imported! The page will now reload."
+msgstr ""
+
+msgid "Import error: "
+msgstr ""
+
+msgid "Unknown error"
+msgstr ""
+
+msgid "Do you want to overwrite this file with the clean original version from WordPress.org?"
+msgstr ""
+
+msgid "Repair error: "
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Invalid JSON format."
+msgstr ""
+
+msgid "🗑️ <strong>%d</strong> expired transients deleted."
+msgstr ""
+
+msgid "🗑️ <strong>%d</strong> spam/trash comments removed."
+msgstr ""
+
+msgid "🗑️ <strong>%d</strong> old post revisions cleaned."
+msgstr ""
+
+msgid "⚡ Database tables defragmented (overhead released)."
+msgstr ""
+
+msgid "Everything was already spotless! No cleanup needed."
+msgstr ""
+
+msgid "Security warning: Invalid core path."
+msgstr ""
+
+msgid "Could not load original file from WordPress.org (HTTP %d)."
+msgstr ""
+
+msgid "Downloaded file is empty. Aborting."
+msgstr ""
+
+msgid "Missing write permissions. The file could not be overwritten."
+msgstr ""
+
+msgid "Core file successfully repaired: %s"
 msgstr ""

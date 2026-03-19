@@ -5,8 +5,8 @@ msgstr ""
 "PO-Revision-Date: 2026-02-26 22:21:40\n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8
-"
+"Content-Type: text/plain; charset=UTF-8\n"
+
 
 msgid "Auto backup"
 msgstr "Auto Backup"
@@ -203,7 +203,7 @@ msgid "Admin Honeypot"
 msgstr "Admin Honeypot"
 
 msgid "Permanently bans anyone trying to log in as admin."
-msgstr "Sperrt jeden dauerhaft, der versucht, sich als "admin" einzuloggen."
+msgstr "Sperrt jeden dauerhaft, der versucht, sich als \"admin\" einzuloggen."
 
 msgid "Privilege Escalation Guard"
 msgstr "Rechteausweitungs-Schutz"
@@ -580,7 +580,7 @@ msgstr "NEIN"
 msgid "Manual Nginx Rules (Copy & Paste):"
 msgstr "Manuelle Nginx-Regeln (Copy & Paste):"
 
-msgid "Please click \'Write rules to server config\' below first."
+msgid "Please click 'Write rules to server config' below first."
 msgstr "Bitte zuerst unten auf 'Regeln in .htaccess/nginx schreiben' klicken."
 
 msgid "Shows the <em>actually</em> delivered response headers (incl. Nginx/CDN/Cache). This helps you detect conflicts or duplications."
@@ -619,8 +619,8 @@ msgstr "✅ Whitelist (Nur Ausgewählte erlauben)"
 msgid "Country Codes (Comma separated)"
 msgstr "Länder Codes (Kommagetrennt)"
 
-msgid "Example: "US, UK, CA" allows only English speaking countries."
-msgstr "Beispiel für Whitelist: "DE, AT, CH" erlaubt nur deutschsprachige Länder."
+msgid "Example: \"US, UK, CA\" allows only English speaking countries."
+msgstr "Beispiel für Whitelist: \"DE, AT, CH\" erlaubt nur deutschsprachige Länder."
 
 msgid "Save Settings"
 msgstr "Einstellungen Speichern"
@@ -717,3 +717,96 @@ msgstr "Blockiert"
 
 msgid "Traffic"
 msgstr "Traffic"
+
+msgid "One option name part per line (e.g., <code>_transient_</code> or <code>wp_cache</code>). Options containing these words will be ignored."
+msgstr "Pro Zeile ein Teil des Options-Namens (z.B. <code>_transient_</code> oder <code>wp_cache</code>). Optionen, die diese Wörter enthalten, werden vom Scanner ignoriert."
+
+msgid "Save Exceptions"
+msgstr "Ausnahmen Speichern"
+
+msgid "One search term per line (e.g., <code>wp_mail</code> or <code>backup</code>). Cron hooks containing these words will be completely ignored."
+msgstr "Pro Zeile ein Suchbegriff (z.B. <code>wp_mail</code> oder <code>backup</code>). Cron-Hooks, die diese Wörter enthalten, werden vom Scanner komplett ignoriert."
+
+msgid "Manual database cleanup. Deletes expired transients, spam comments, old post revisions, and optimizes table overhead. <strong>This process only runs after manual click.</strong>"
+msgstr "Manuelle Bereinigung der Datenbank. Löscht abgelaufene Transients, Spam-Kommentare, alte Beitrags-Revisionen und optimiert den Tabellen-Overhead. <strong>Dieser Vorgang läuft nur nach manuellem Klick.</strong>"
+
+msgid "Transfer your perfect settings (including whitelists and regex rules) to other websites with one click."
+msgstr "Übertrage deine perfekten Einstellungen (inklusive Whitelists und Regex-Regeln) mit einem Klick auf andere Websites."
+
+msgid "Downloads a .json file with all current settings."
+msgstr "Lädt eine .json Datei mit allen aktuellen Einstellungen herunter."
+
+msgid "Select a .json file to configure this site instantly."
+msgstr "Wähle eine .json Datei aus, um diese Seite sofort zu konfigurieren."
+
+msgid "Create a temporary admin account. The user receives a secure login link via email. After the time expires, the account deletes itself completely."
+msgstr "Erstelle einen zeitlich begrenzten Admin-Account. Der Nutzer erhält einen sicheren Login-Link per E-Mail. Nach Ablauf der Zeit löscht sich der Account selbstständig restlos."
+
+msgid "Send your backups automatically to an external FTP server. All credentials are encrypted with <strong>AES-256-CBC</strong> in your database."
+msgstr "Sende deine Backups automatisch auf einen externen FTP-Server. Alle Zugangsdaten werden mit <strong>AES-256-CBC</strong> in deiner Datenbank verschlüsselt abgelegt."
+
+msgid "Do you want to clean the database now? (This may take a few seconds on large sites)"
+msgstr "Möchtest du die Datenbank jetzt bereinigen? (Dies kann bei großen Seiten einige Sekunden dauern)"
+
+msgid "Error during cleanup."
+msgstr "Fehler bei der Bereinigung."
+
+msgid "Cleanup successful! Statistics:"
+msgstr "Bereinigung erfolgreich! Statistiken:"
+
+msgid "Please select a .json file first!"
+msgstr "Bitte wähle zuerst eine .json Datei aus!"
+
+msgid "WARNING: This will overwrite all current plugin settings. Continue?"
+msgstr "ACHTUNG: Dies überschreibt alle aktuellen Plugin-Einstellungen. Fortfahren?"
+
+msgid "Successfully imported! The page will now reload."
+msgstr "Erfolgreich importiert! Die Seite wird nun neu geladen."
+
+msgid "Import error: "
+msgstr "Fehler beim Import: "
+
+msgid "Unknown error"
+msgstr "Unbekannter Fehler"
+
+msgid "Do you want to overwrite this file with the clean original version from WordPress.org?"
+msgstr "Möchtest du diese Datei mit der sauberen Originalversion von WordPress.org überschreiben?"
+
+msgid "Repair error: "
+msgstr "Fehler beim Reparieren: "
+
+msgid "Unknown"
+msgstr "Unbekannt"
+
+msgid "Invalid JSON format."
+msgstr "Ungültiges JSON Format."
+
+msgid "🗑️ <strong>%d</strong> expired transients deleted."
+msgstr "🗑️ <strong>%d</strong> abgelaufene Transients gelöscht."
+
+msgid "🗑️ <strong>%d</strong> spam/trash comments removed."
+msgstr "🗑️ <strong>%d</strong> Spam/Trash-Kommentare entfernt."
+
+msgid "🗑️ <strong>%d</strong> old post revisions cleaned."
+msgstr "🗑️ <strong>%d</strong> alte Beitrags-Revisionen bereinigt."
+
+msgid "⚡ Database tables defragmented (overhead released)."
+msgstr "⚡ Datenbank-Tabellen defragmentiert (Overhead freigegeben)."
+
+msgid "Everything was already spotless! No cleanup needed."
+msgstr "Alles war bereits blitzblank! Keine Bereinigung nötig."
+
+msgid "Security warning: Invalid core path."
+msgstr "Sicherheitswarnung: Ungültiger Core-Pfad."
+
+msgid "Could not load original file from WordPress.org (HTTP %d)."
+msgstr "Konnte Originaldatei nicht von WordPress.org laden (HTTP %d)."
+
+msgid "Downloaded file is empty. Aborting."
+msgstr "Heruntergeladene Datei ist leer. Abbruch."
+
+msgid "Missing write permissions. The file could not be overwritten."
+msgstr "Schreibrechte fehlen. Die Datei konnte nicht überschrieben werden."
+
+msgid "Core file successfully repaired: %s"
+msgstr "Core-Datei erfolgreich repariert: %s"
